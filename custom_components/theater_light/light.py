@@ -8,9 +8,9 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers import event
+from homeassistant.components.light import ENTITY_ID_FORMAT
+from homeassistant.helpers.entity import generate_entity_id
 from .right_light import RightLight
-
-#TODO: Return supported features
 
 from . import DOMAIN
 
@@ -46,13 +46,6 @@ async def async_setup_platform(
     await hass.components.mqtt.async_subscribe( "zigbee2mqtt/Theater Motion Sensor", motion_sensor_message_received )
 
 
-class Modes(Enum):
-    NORMAL = 0
-    COLOR = 1
-    COLOR_TEMP = 2
-    RIGHT_LIGHT = 3
-
-
 class TheaterLight(LightEntity):
     """Theater Light."""
 
@@ -64,6 +57,7 @@ class TheaterLight(LightEntity):
         self._brightness = 0
         self._brightness_override = 0
         self._mode = "Off"
+        self.entity_id = generate_entity_id(ENTITY_ID_FORMAT, self._name, [])
 
         # Record whether a switch was used to turn on this light
         self.switched_on = False
@@ -79,7 +73,7 @@ class TheaterLight(LightEntity):
         self._rightlight = RightLight(self._light, self.hass)
 
 #        #temp = self.hass.states.get(harmony_entity).new_state
-        #_LOGGER.error(f"Harmony state: {temp}")
+#        #_LOGGER.error(f"Harmony state: {temp}")
         event.async_track_state_change_event(self.hass, harmony_entity, self.harmony_update)
 
         # Not working.  Light starts up an sends None=>Off, Off=>Off, Off=>On, but not sure if that's always the case
@@ -132,6 +126,23 @@ class TheaterLight(LightEntity):
 #    @property
 #    def supported_color_modes(self) -> set[str] | None:
 #        return ['color_temp', 'xy']
+
+    @property
+    def device_info(self):
+        prop = {
+            "identifiers": {
+                # Serial numbers are unique identifiers within a specific domain
+                (DOMAIN, self.unique_id)
+            },
+            "name": self._name,
+            "manufacturer": "Aaron"
+        }
+        return prop
+
+    @property
+    def unique_id(self):
+        """Return the unique id of the light."""
+        return self.entity_id
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Instruct the light to turn on.
