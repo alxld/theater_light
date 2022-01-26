@@ -17,6 +17,7 @@ from . import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 light_entity = "light.theater_group"
+harmony_entity = "remote.theater_harmony_hub"
 brightness_step = 32
 
 async def async_setup_platform(
