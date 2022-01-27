@@ -60,6 +60,7 @@ class TheaterLight(LightEntity):
         self._brightness = 0
         self._brightness_override = 0
         self._mode = "Off"
+        self._occupancy = False
         self.entity_id = generate_entity_id(ENTITY_ID_FORMAT, self._name, [])
 
         # Record whether a switch was used to turn on this light
@@ -100,7 +101,13 @@ class TheaterLight(LightEntity):
             _LOGGER.error(f"Light update: {this_event}")
 
     def _updateState(self, comment = ""):
-        self.hass.states.async_set(f"light.{self._name}", self._state, {"brightness": self._brightness, "brightness_override": self._brightness_override, "switched_on": self.switched_on, "harmony_on": self.harmony_on, "mode": self._mode, "comment": comment})
+        self.hass.states.async_set(f"light.{self._name}", self._state, {"brightness": self._brightness,
+                                                                        "brightness_override": self._brightness_override,
+                                                                        "switched_on": self.switched_on,
+                                                                        "harmony_on": self.harmony_on,
+                                                                        "occupancy": self._occupancy,
+                                                                        "mode": self._mode,
+                                                                        "comment": comment})
 #        self.hass.states.async_set(f"light.{self._name}", self._state, {"brightness": self._brightness, "brightness_override": self._brightness_override, "switched_on": self.switched_on, "mode": self._mode, "comment": comment})
 
     @property
@@ -244,8 +251,8 @@ class TheaterLight(LightEntity):
 
     async def motion_sensor_message_received(self, topic: str, payload: str, qos: int) -> None:
         """A new MQTT message has been received."""
-        occ = payload["occupancy"]
-        self._updateState(f"OCC: {occ}")
+        self._occupancy = True if payload["occupancy"] == "True" else False
+        self._updateState()
 
         # Disable motion sensor tracking if the lights are switched on or the harmony is on
         if self.switched_on or self.harmony_on:
