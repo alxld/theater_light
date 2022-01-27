@@ -122,6 +122,8 @@ class TheaterLight(LightEntity):
 #        #_LOGGER.error(f"Harmony state: {temp}")
         event.async_track_state_change_event(self.hass, harmony_entity, self.harmony_update)
 
+        self.async_schedule_update_ha_state(force_refresh=True)
+
         # Not working.  Light starts up an sends None=>Off, Off=>Off, Off=>On, but not sure if that's always the case
         #event.async_track_state_change_event(self.hass, self._light, self.light_update)
 
@@ -310,6 +312,7 @@ class TheaterLight(LightEntity):
         #self._state = "on"
         await self._rightlight.turn_on(mode=self._mode)
         self._updateState()
+        self.async_schedule_update_ha_state(force_refresh=True)
         self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
@@ -325,6 +328,7 @@ class TheaterLight(LightEntity):
 #        await self.hass.services.async_call(
 #            "light", "turn_off", {"entity_id": self._light}
 #        )
+        self.async_schedule_update_ha_state(force_refresh=True)
         self.async_write_ha_state()
 
     async def up_brightness(self) -> None:
