@@ -1,18 +1,57 @@
 """Platform for light integration"""
 from __future__ import annotations
 import logging, json
-from enum import Enum
-import homeassistant.helpers.config_validation as cv
-from homeassistant.components.light import ATTR_BRIGHTNESS, LightEntity
+#from enum import Enum
+#import homeassistant.helpers.config_validation as cv
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers import event
-from homeassistant.components.light import ENTITY_ID_FORMAT
 from homeassistant.helpers.entity import generate_entity_id
+from homeassistant.components.light import (
+    ATTR_BRIGHTNESS,
+    ATTR_COLOR_TEMP,
+    ATTR_EFFECT,
+    ATTR_EFFECT_LIST,
+    ATTR_FLASH,
+    ATTR_HS_COLOR,
+    ATTR_MAX_MIREDS,
+    ATTR_MIN_MIREDS,
+    ATTR_TRANSITION,
+    ATTR_WHITE_VALUE,
+    ENTITY_ID_FORMAT,
+    PLATFORM_SCHEMA,
+    SUPPORT_BRIGHTNESS,
+    SUPPORT_COLOR,
+    SUPPORT_COLOR_TEMP,
+    SUPPORT_EFFECT,
+    SUPPORT_FLASH,
+    SUPPORT_TRANSITION,
+    SUPPORT_WHITE_VALUE,
+    LightEntity
+)
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    ATTR_SUPPORTED_FEATURES,
+    CONF_ENTITY_ID,
+    CONF_NAME,
+    CONF_OFFSET,
+    CONF_UNIQUE_ID,
+    EVENT_HOMEASSISTANT_START,
+    STATE_ON,
+    STATE_UNAVAILABLE,
+)
 from .right_light import RightLight
 
 from . import DOMAIN
+
+SUPPORT_BRIGHTNESS = 1
+SUPPORT_COLOR_TEMP = 2
+SUPPORT_EFFECT = 4
+SUPPORT_FLASH = 8
+SUPPORT_COLOR = 16
+SUPPORT_TRANSITION = 32
+SUPPORT_WHITE_VALUE = 128
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +59,7 @@ light_entity = "light.theater_group"
 harmony_entity = "remote.theater_harmony_hub"
 switch_action = "zigbee2mqtt/Theater Switch/action"
 motion_sensor_action = "zigbee2mqtt/Theater Motion Sensor"
-brightness_step = 32
+brightness_step = 43
 
 async def async_setup_platform(
     hass: HomeAssistant,
@@ -56,12 +95,24 @@ class TheaterLight(LightEntity):
         """Initialize Theater Light."""
         self._light = light_entity
         self._name = "Theater"
-        self._state = 'off'
+        #self._state = 'off'
         self._brightness = 0
         self._brightness_override = 0
+        self._hs_color: Optional[Tuple[float, float]] = None
+        self._color_temp: Optional[int] = None
+        self._rgb_color: Optional[Tuple[int, int, int]] = None
+        self._min_mireds: int = 154
+        self._max_mireds: int = 500
         self._mode = "Off"
+        self._is_on = False
+        self._available = True
         self._occupancy = False
         self.entity_id = generate_entity_id(ENTITY_ID_FORMAT, self._name, [])
+        self.supported_features = SUPPORT_BRIGHTNESS + SUPPORT_COLOR + SUPPORT_COLOR_TEMP + SUPPORT_TRANSITION
+        self._white_value: Optional[int] = None
+        self._effect_list: Optional[List[str]] = None
+        self._effect: Optional[str] = None
+        self._supported_features: int = 0
 
         # Record whether a switch was used to turn on this light
         self.switched_on = False
@@ -93,15 +144,15 @@ class TheaterLight(LightEntity):
         else:
             self.harmony_on = False
 
-    @callback
-    async def light_update(self, this_event):
-        """Get initial light state"""
-        ev = this_event.as_dict()
-        if self._state == None and ev["data"]["old_state"] != None:
-            _LOGGER.error(f"Light update: {this_event}")
+    #@callback
+    #async def light_update(self, this_event):
+    #    """Get initial light state"""
+    #    ev = this_event.as_dict()
+    #    if self._state == None and ev["data"]["old_state"] != None:
+    #        _LOGGER.error(f"Light update: {this_event}")
 
     def _updateState(self, comment = ""):
-        self.hass.states.async_set(f"light.{self._name}", self._state, {"brightness": self._brightness,
+        self.hass.states.async_set(f"light.{self._name}", self._is_on, {"brightness": self._brightness,
                                                                         "brightness_override": self._brightness_override,
                                                                         "switched_on": self.switched_on,
                                                                         "harmony_on": self.harmony_on,
@@ -131,11 +182,8 @@ class TheaterLight(LightEntity):
     @property
     def is_on(self) -> bool | None:
         """Return true if light is on."""
-        return self._state == "on"
-
-#    @property
-#    def supported_color_modes(self) -> set[str] | None:
-#        return ['color_temp', 'xy']
+        return self._is_on
+        #return self._state == "on"
 
     @property
     def device_info(self):
@@ -154,15 +202,105 @@ class TheaterLight(LightEntity):
         """Return the unique id of the light."""
         return self.entity_id
 
-    async def async_turn_on(self, **kwargs: Any) -> None:
+    @property
+    def available(self) -> bool:
+        """Return whether the light group is available."""
+        return self._available
+
+    @property
+    def brightness(self) -> Optional[int]:
+        """Return the brightness of this light between 0..255."""
+        return self._brightness
+
+    @property
+    def hs_color(self) -> Optional[Tuple[float, float]]:
+        """Return the hue and saturation color value [float, float]."""
+        return self._hs_color
+
+    @property
+    def color_temp(self) -> Optional[int]:
+        """Return the CT color value in mireds."""
+        return self._color_temp
+
+    @property
+    def min_mireds(self) -> int:
+        """Return the coldest color_temp that this light group supports."""
+        return self._min_mireds
+
+    @property
+    def max_mireds(self) -> int:
+        """Return the warmest color_temp that this light group supports."""
+        return self._max_mireds
+
+    @property
+    def white_value(self) -> Optional[int]:
+        """Return the white value of this light group between 0..255."""
+        return self._white_value
+
+    @property
+    def rgb_color(self) -> tuple[int, int, int] | None:
+        """Return the rgb color value [int, int, int]."""
+        return self._rgb_color
+
+    @property
+    def color_temp(self) -> int | None:
+        """Return the CT color value in mireds."""
+        return self._attr_color_temp
+
+    @property
+    def supported_features(self) -> int:
+        """Flag supported features."""
+        return self._supported_features
+
+#    def capability_attributes(self):
+#        """Return capability attributes."""
+#        data = {}
+#        supported_features = self.supported_features
+#        supported_color_modes = self._light_internal_supported_color_modes
+#
+#        if COLOR_MODE_COLOR_TEMP in supported_color_modes:
+#            data[ATTR_MIN_MIREDS] = self.min_mireds
+#            data[ATTR_MAX_MIREDS] = self.max_mireds
+#
+#        if supported_features & SUPPORT_EFFECT:
+#            data[ATTR_EFFECT_LIST] = self.effect_list
+#
+#        data[ATTR_SUPPORTED_COLOR_MODES] = sorted(supported_color_modes)
+#
+#        return data
+
+    async def async_turn_on(self, **kwargs) -> None:
         """Instruct the light to turn on.
         You can skip the brightness part if your light does not support
         brightness control.
         """
         self._brightness = kwargs.get(ATTR_BRIGHTNESS, 255)
-        self._state = "on"
+        self._is_on = True
         self._mode = "On"
-        await self._rightlight.turn_on(brightness=self._brightness, brightness_override=self._brightness_override)
+
+        rl = True
+        data = {ATTR_ENTITY_ID: self._light}
+
+        if ATTR_HS_COLOR in kwargs:
+            rl = False
+            data[ATTR_HS_COLOR] = kwargs[ATTR_HS_COLOR]
+        if ATTR_BRIGHTNESS in kwargs:
+            data[ATTR_BRIGHTNESS] = kwargs[ATTR_BRIGHTNESS]
+        if ATTR_COLOR_TEMP in kwargs:
+            rl = False
+            data[ATTR_COLOR_TEMP] = kwargs[ATTR_COLOR_TEMP]
+        if ATTR_WHITE_VALUE in kwargs:
+            rl = False
+            data[ATTR_WHITE_VALUE] = kwargs[ATTR_WHITE_VALUE]
+        if ATTR_TRANSITION in kwargs:
+            data[ATTR_TRANSITION] = kwargs[ATTR_TRANSITION]
+
+        if rl:
+            await self._rightlight.turn_on(brightness=self._brightness, brightness_override=self._brightness_override)
+        else:
+            await self._rightlight.disable()
+            await self.hass.services.async_call("light", SERVICE_TURN_ON, data, blocking=True, limit=2)
+
         self._updateState()
 
 #        # await self.hass.components.mqtt.async_publish(self.hass, "zigbee2mqtt/Office/set", f"{{\"brightness\": {self._brightness}, \"state\": \"on\"}}")
@@ -175,7 +313,8 @@ class TheaterLight(LightEntity):
 
     async def async_turn_on_mode(self, **kwargs: Any) -> None:
         self._mode = kwargs.get("mode", "Vivid")
-        self._state = "on"
+        self._is_on = True
+        #self._state = "on"
         await self._rightlight.turn_on(mode=self._mode)
         self._updateState()
         self.async_write_ha_state()
@@ -184,7 +323,8 @@ class TheaterLight(LightEntity):
         """Instruct the light to turn off."""
         self._brightness = 0
         self._brightness_override = 0
-        self._state = "off"
+        self._is_on = False
+        #self._state = "off"
         await self._rightlight.disable_and_turn_off()
         self._updateState()
 
@@ -219,14 +359,38 @@ class TheaterLight(LightEntity):
             self._brightness = self._brightness - brightness_step
             await self.async_turn_on(brightness=self._brightness)
 
-    def update(self) -> None:
-        """Fetch new state data for this light.
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        # self._light.update()
-        # self._state = self._light.is_on()
-        # self._brightness = self._light.brightness
-        self._updateState()
+    async def async_update(self):
+        """Query light and determine the state."""
+        state = self.hass.states.get(self._light)
+
+        self._is_on = (state.state == STATE_ON)
+        self._available = (state.state != STATE_UNAVAILABLE)
+
+        self._brightness = state.attributes.get(ATTR_BRIGHTNESS)
+
+        self._hs_color = state.attributes.get(ATTR_HS_COLOR)
+
+        self._white_value = state.attributes.get(ATTR_WHITE_VALUE)
+
+        self._color_temp = state.attributes.get(ATTR_COLOR_TEMP, self._color_temp)
+        self._min_mireds = state.attributes.get(ATTR_MIN_MIREDS, 154)
+        self._max_mireds = state.attributes.get(ATTR_MAX_MIREDS, 500)
+
+        self._effect_list = state.attributes.get(ATTR_EFFECT_LIST)
+        self._effect = state.attributes.get(ATTR_EFFECT)
+
+        self._supported_features = state.attributes.get(ATTR_SUPPORTED_FEATURES)
+        # Bitwise-or the supported features with the color temp feature
+        self._supported_features |= SUPPORT_COLOR_TEMP
+
+#    def update(self) -> None:
+#        """Fetch new state data for this light.
+#        This is the only method that should fetch new data for Home Assistant.
+#        """
+#        # self._light.update()
+#        # self._state = self._light.is_on()
+#        # self._brightness = self._light.brightness
+#        self._updateState()
 
     async def switch_message_received(self, topic: str, payload: str, qos: int) -> None:
         """A new MQTT message has been received."""
