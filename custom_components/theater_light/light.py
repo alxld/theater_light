@@ -226,6 +226,7 @@ class TheaterLight(LightEntity):
         # self._light.update()
         # self._state = self._light.is_on()
         # self._brightness = self._light.brightness
+        self._updateState()
 
     async def switch_message_received(self, topic: str, payload: str, qos: int) -> None:
         """A new MQTT message has been received."""
@@ -258,7 +259,7 @@ class TheaterLight(LightEntity):
         if self.switched_on or self.harmony_on:
             return
 
-        if occ == "True":
+        if self._occupancy:
             await self.async_turn_on()
-        elif occ == "False":
+        else:
             await self.async_turn_off()
