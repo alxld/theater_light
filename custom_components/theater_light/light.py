@@ -45,14 +45,6 @@ from .right_light import RightLight
 
 from . import DOMAIN
 
-SUPPORT_BRIGHTNESS = 1
-SUPPORT_COLOR_TEMP = 2
-SUPPORT_EFFECT = 4
-SUPPORT_FLASH = 8
-SUPPORT_COLOR = 16
-SUPPORT_TRANSITION = 32
-SUPPORT_WHITE_VALUE = 128
-
 _LOGGER = logging.getLogger(__name__)
 
 light_entity = "light.theater_group"
@@ -108,7 +100,6 @@ class TheaterLight(LightEntity):
         self._available = True
         self._occupancy = False
         self.entity_id = generate_entity_id(ENTITY_ID_FORMAT, self._name, [])
-        self.supported_features = SUPPORT_BRIGHTNESS + SUPPORT_COLOR + SUPPORT_COLOR_TEMP + SUPPORT_TRANSITION
         self._white_value: Optional[int] = None
         self._effect_list: Optional[List[str]] = None
         self._effect: Optional[str] = None
@@ -152,13 +143,14 @@ class TheaterLight(LightEntity):
     #        _LOGGER.error(f"Light update: {this_event}")
 
     def _updateState(self, comment = ""):
-        self.hass.states.async_set(f"light.{self._name}", self._is_on, {"brightness": self._brightness,
-                                                                        "brightness_override": self._brightness_override,
-                                                                        "switched_on": self.switched_on,
-                                                                        "harmony_on": self.harmony_on,
-                                                                        "occupancy": self._occupancy,
-                                                                        "mode": self._mode,
-                                                                        "comment": comment})
+        pass
+        #self.hass.states.async_set(f"light.{self._name}", self._is_on, {"brightness": self._brightness,
+        #                                                                "brightness_override": self._brightness_override,
+        #                                                                "switched_on": self.switched_on,
+        #                                                                "harmony_on": self.harmony_on,
+        #                                                                "occupancy": self._occupancy,
+        #                                                                "mode": self._mode,
+        #                                                                "comment": comment})
 #        self.hass.states.async_set(f"light.{self._name}", self._state, {"brightness": self._brightness, "brightness_override": self._brightness_override, "switched_on": self.switched_on, "mode": self._mode, "comment": comment})
 
     @property
@@ -274,6 +266,7 @@ class TheaterLight(LightEntity):
         You can skip the brightness part if your light does not support
         brightness control.
         """
+        _LOGGER.error(f"THEATER_LIGHT ASYNC_TURN_ON: {kwargs}")
         self._brightness = kwargs.get(ATTR_BRIGHTNESS, 255)
         self._is_on = True
         self._mode = "On"
@@ -361,6 +354,7 @@ class TheaterLight(LightEntity):
 
     async def async_update(self):
         """Query light and determine the state."""
+        _LOGGER.error("THEATER_LIGHT ASYNC_UPDATE")
         state = self.hass.states.get(self._light)
 
         self._is_on = (state.state == STATE_ON)
