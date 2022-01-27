@@ -25,6 +25,7 @@ class RightLight:
         self._ct_scalar = 0.35
 
         self.on_transition = 0.1
+        self.on_color_transition = 1
         self.off_transition = 0.1
         self.dim_transition = 0.1
 
@@ -100,7 +101,7 @@ class RightLight:
             await self._hass.services.async_call("light", "turn_on", {"entity_id": self._entity, "brightness": br, "kelvin": ct, "transition": 0.1})
 
             # Transition to next values
-            await asyncio.sleep(self.on_transition + 1)
+            await asyncio.sleep(self.on_transition + 0.1)
             await self._hass.services.async_call("light", "turn_on", {"entity_id": self._entity, "brightness": br_next, "kelvin": ct_next, "transition": time_rem})
 
             # Schedule another turn_on at next_time to start the next transition
@@ -116,14 +117,15 @@ class RightLight:
             r_now = prev_rgb[0] + (next_rgb[0] - prev_rgb[0])*time_ratio
             g_now = prev_rgb[1] + (next_rgb[1] - prev_rgb[1])*time_ratio
             b_now = prev_rgb[2] + (next_rgb[2] - prev_rgb[2])*time_ratio
+            now_rgb = [r_now, g_now, b_now]
 
-            self._logger.error(f"Final: {r_now}/{g_now}/{b_now} -> {time_rem}sec")
+            self._logger.error(f"Final: {now_rgb} -> {time_rem}sec")
 
             # Turn on light to interpolated values
-            await self._hass.services.async_call("light", "turn_on", {"entity_id": self._entity, "rgb_color": (r_now, g_now, b_now), "transition": self.on_transition})
+            await self._hass.services.async_call("light", "turn_on", {"entity_id": self._entity, "rgb_color": now_rgb, "transition": self.on_color_transition})
 
             # Transition to next values
-            await asyncio.sleep(self.on_transition + 1)
+            await asyncio.sleep(self.on_color_transition + 0.1)
             await self._hass.services.async_call("light", "turn_on", {"entity_id": self._entity, "rgb_color": next_rgb, "transition": time_rem})
 
             # Schedule another turn on at next_time to start the next transition

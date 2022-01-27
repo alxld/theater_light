@@ -18,6 +18,8 @@ _LOGGER = logging.getLogger(__name__)
 
 light_entity = "light.theater_group"
 harmony_entity = "remote.theater_harmony_hub"
+switch_action = "zigbee2mqtt/Theater Switch/action"
+motion_sensor_action = "zigbee2mqtt/Theater Motion Sensor"
 brightness_step = 32
 
 async def async_setup_platform(
@@ -43,8 +45,8 @@ async def async_setup_platform(
         """A new motion sensor MQTT message has been received"""
         await ent.motion_sensor_message_received(topic, json.loads(payload), qos)
 
-    await hass.components.mqtt.async_subscribe( "zigbee2mqtt/Theater Switch/action", switch_message_received )
-    await hass.components.mqtt.async_subscribe( "zigbee2mqtt/Theater Motion Sensor", motion_sensor_message_received )
+    await hass.components.mqtt.async_subscribe( switch_action, switch_message_received )
+    await hass.components.mqtt.async_subscribe( motion_sensor_action, motion_sensor_message_received )
 
 
 class TheaterLight(LightEntity):
@@ -249,7 +251,7 @@ class TheaterLight(LightEntity):
         if self.switched_on or self.harmony_on:
             return
 
-        if occ == "true":
+        if occ == "True":
             await self.async_turn_on()
-        elif occ == "false":
+        elif occ == "False":
             await self.async_turn_off()
