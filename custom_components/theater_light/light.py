@@ -416,7 +416,7 @@ class TheaterLight(LightEntity):
 
     async def motion_sensor_message_received(self, topic: str, payload: str, qos: int) -> None:
         """A new MQTT message has been received."""
-        self._occupancy = True if payload["occupancy"] == "True" else False
+        self._occupancy = payload["occupancy"]
         self._updateState()
 
         # Disable motion sensor tracking if the lights are switched on or the harmony is on
