@@ -166,14 +166,6 @@ class TheaterLight(LightEntity):
         return self._name
 
     @property
-    def brightness(self):
-        """Return the brightness of the light.
-        This method is optional. Removing it indicates to Home Assistant
-        that brightness is not supported for this light.
-        """
-        return self._brightness
-
-    @property
     def is_on(self) -> bool | None:
         """Return true if light is on."""
         return self._is_on
@@ -237,11 +229,6 @@ class TheaterLight(LightEntity):
         return self._rgb_color
 
     @property
-    def color_temp(self) -> int | None:
-        """Return the CT color value in mireds."""
-        return self._attr_color_temp
-
-    @property
     def supported_features(self) -> int:
         """Flag supported features."""
         return self._supported_features
@@ -269,7 +256,13 @@ class TheaterLight(LightEntity):
         brightness control.
         """
         _LOGGER.error(f"THEATER_LIGHT ASYNC_TURN_ON: {kwargs}")
-        self._brightness = kwargs.get(ATTR_BRIGHTNESS, 255)
+        if 'brightness' in kwargs:
+            self._brightness = kwargs['brightness']
+        elif self._brightness == 0:
+            self._brightness = 255
+
+#        def_br = 255 if self._brightness == 0 else self._brightness
+#        self._brightness = kwargs.get(ATTR_BRIGHTNESS, def_br)
         self._is_on = True
         self._mode = "On"
 
@@ -363,21 +356,21 @@ class TheaterLight(LightEntity):
         _LOGGER.error("THEATER_LIGHT ASYNC_UPDATE")
         state = self.hass.states.get(self._light)
 
-        self._is_on = (state.state == STATE_ON)
-        self._available = (state.state != STATE_UNAVAILABLE)
+#        self._is_on = (state.state == STATE_ON)
+#        self._available = (state.state != STATE_UNAVAILABLE)
 
-        self._brightness = state.attributes.get(ATTR_BRIGHTNESS)
+#        self._brightness = state.attributes.get(ATTR_BRIGHTNESS)
 
-        self._hs_color = state.attributes.get(ATTR_HS_COLOR)
+#        self._hs_color = state.attributes.get(ATTR_HS_COLOR)
 
-        self._white_value = state.attributes.get(ATTR_WHITE_VALUE)
+#        self._white_value = state.attributes.get(ATTR_WHITE_VALUE)
 
-        self._color_temp = state.attributes.get(ATTR_COLOR_TEMP, self._color_temp)
-        self._min_mireds = state.attributes.get(ATTR_MIN_MIREDS, 154)
-        self._max_mireds = state.attributes.get(ATTR_MAX_MIREDS, 500)
+#        self._color_temp = state.attributes.get(ATTR_COLOR_TEMP, self._color_temp)
+#        self._min_mireds = state.attributes.get(ATTR_MIN_MIREDS, 154)
+#        self._max_mireds = state.attributes.get(ATTR_MAX_MIREDS, 500)
 
         self._effect_list = state.attributes.get(ATTR_EFFECT_LIST)
-        self._effect = state.attributes.get(ATTR_EFFECT)
+#        self._effect = state.attributes.get(ATTR_EFFECT)
 
         self._supported_features = state.attributes.get(ATTR_SUPPORTED_FEATURES)
         # Bitwise-or the supported features with the color temp feature
@@ -416,6 +409,10 @@ class TheaterLight(LightEntity):
 
     async def motion_sensor_message_received(self, topic: str, payload: str, qos: int) -> None:
         """A new MQTT message has been received."""
+        if self._occupancy == payload["occupancy"]:
+            # No change to state
+            return
+
         self._occupancy = payload["occupancy"]
         self._updateState()
 
@@ -424,6 +421,6 @@ class TheaterLight(LightEntity):
             return
 
         if self._occupancy:
-            await self.async_turn_on()
+            await self.async_turn_on(brightness=192)
         else:
             await self.async_turn_off()
