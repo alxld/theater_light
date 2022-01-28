@@ -294,7 +294,7 @@ class TheaterLight(LightEntity):
             await self._rightlight.turn_on(brightness=self._brightness, brightness_override=self._brightness_override)
         else:
             await self._rightlight.disable()
-            await self.hass.services.async_call("light", SERVICE_TURN_ON, data, blocking=True, limit=2)
+            await self.hass.services.async_call("light", "turn_on", data, blocking=True, limit=2)
 
         self._updateState()
 
@@ -304,16 +304,18 @@ class TheaterLight(LightEntity):
 #            "turn_on",
 #            {"entity_id": self._light, "brightness": self._brightness},
 #        )
-        self.async_write_ha_state()
+        self.async_schedule_update_ha_state(force_refresh=True)
+        #self.async_write_ha_state()
 
     async def async_turn_on_mode(self, **kwargs: Any) -> None:
         self._mode = kwargs.get("mode", "Vivid")
         self._is_on = True
+        self._brightness = 255
         #self._state = "on"
         await self._rightlight.turn_on(mode=self._mode)
         self._updateState()
         self.async_schedule_update_ha_state(force_refresh=True)
-        self.async_write_ha_state()
+        #self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Instruct the light to turn off."""
@@ -329,7 +331,7 @@ class TheaterLight(LightEntity):
 #            "light", "turn_off", {"entity_id": self._light}
 #        )
         self.async_schedule_update_ha_state(force_refresh=True)
-        self.async_write_ha_state()
+        #self.async_write_ha_state()
 
     async def up_brightness(self) -> None:
         """Increase brightness by one step"""

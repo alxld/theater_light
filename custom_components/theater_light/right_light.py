@@ -139,7 +139,7 @@ class RightLight:
         self._brightness = 0
         await self._hass.services.async_call("light", "turn_off", {"entity_id": self._entity, "transition": self.off_transition})
 
-    def disable(self):
+    async def disable(self):
         # Cancel any pending eventloop schedules
         self._cancelSched()
 
