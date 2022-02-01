@@ -267,7 +267,7 @@ class TheaterLight(LightEntity):
         self._mode = "On"
 
         rl = True
-        data = {ATTR_ENTITY_ID: self._light}
+        data = {ATTR_ENTITY_ID: self._light, 'transition': 0.1}
 
         if ATTR_HS_COLOR in kwargs:
             rl = False

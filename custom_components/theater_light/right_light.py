@@ -98,10 +98,10 @@ class RightLight:
             self._logger.error(f"Final: {br}/{ct} -> {time_rem}sec")
 
             # Turn on light to interpolated values
-            await self._hass.services.async_call("light", "turn_on", {"entity_id": self._entity, "brightness": br, "kelvin": ct, "transition": 0.1}, blocking=True, limit=2)
+            await self._hass.services.async_call("light", "turn_on", {"entity_id": self._entity, "brightness": br, "kelvin": ct, "transition": self.on_transition}, blocking=True, limit=2)
 
             # Transition to next values
-            #await asyncio.sleep(self.on_transition + 0.1)
+            await asyncio.sleep(self.on_transition)
             await self._hass.services.async_call("light", "turn_on", {"entity_id": self._entity, "brightness": br_next, "kelvin": ct_next, "transition": time_rem})
 
             # Schedule another turn_on at next_time to start the next transition
@@ -125,7 +125,7 @@ class RightLight:
             await self._hass.services.async_call("light", "turn_on", {"entity_id": self._entity, "brightness": 255, "rgb_color": now_rgb, "transition": self.on_color_transition}, blocking=True, limit=2)
 
             # Transition to next values
-            #await asyncio.sleep(self.on_color_transition + 0.1)
+            await asyncio.sleep(self.on_color_transition)
             await self._hass.services.async_call("light", "turn_on", {"entity_id": self._entity, "brightness": 255, "rgb_color": next_rgb, "transition": time_rem})
 
             # Schedule another turn on at next_time to start the next transition
