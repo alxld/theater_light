@@ -356,6 +356,9 @@ class TheaterLight(LightEntity):
         _LOGGER.error("THEATER_LIGHT ASYNC_UPDATE")
         state = self.hass.states.get(self._light)
 
+        if state == None:
+            return
+
 #        self._is_on = (state.state == STATE_ON)
 #        self._available = (state.state != STATE_UNAVAILABLE)
 
