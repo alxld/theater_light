@@ -286,8 +286,9 @@ class TheaterLight(LightEntity):
         if rl:
             await self._rightlight.turn_on(brightness=self._brightness, brightness_override=self._brightness_override)
         else:
-            await self._rightlight.disable()
-            await self.hass.services.async_call("light", "turn_on", data, blocking=True, limit=2)
+            await self._rightlight.turn_on_specific(data)
+            #await self._rightlight.disable()
+            #await self.hass.services.async_call("light", "turn_on", data, blocking=True, limit=2)
 
         self._updateState()
 
