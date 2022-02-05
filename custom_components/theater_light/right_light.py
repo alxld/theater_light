@@ -1,6 +1,6 @@
 from homeassistant.helpers import entity
 from homeassistant.core import HomeAssistant
-from homeassistant.util import dt, color
+from homeassistant.util import dt
 import logging
 from suntime import Sun
 from datetime import date, timedelta
@@ -138,11 +138,8 @@ class RightLight:
         """ External version of _turn_on_specific that runs twice to ensure successful transition """
         await self.disable()
 
-        rgb_color = color.color_hs_to_RGB(data['hs_color'])
-        data['rgb_color'] = rgb_color
-        del data['hs_color']
-
         data['transition'] = 0.2
+        data['brightness'] = 255
 
         await self._turn_on_specific(data)
         self._hass.loop.call_later(0.6, asyncio.create_task, self._turn_on_specific(data))
