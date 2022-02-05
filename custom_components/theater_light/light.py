@@ -53,6 +53,9 @@ switch_action = "zigbee2mqtt/Theater Switch/action"
 motion_sensor_action = "zigbee2mqtt/Theater Motion Sensor"
 brightness_step = 43
 motion_sensor_brightness = 192
+has_harmony = True
+has_motion_sensor = True
+has_switch = True
 
 async def async_setup_platform(
     hass: HomeAssistant,
@@ -77,8 +80,10 @@ async def async_setup_platform(
         """A new motion sensor MQTT message has been received"""
         await ent.motion_sensor_message_received(topic, json.loads(payload), qos)
 
-    await hass.components.mqtt.async_subscribe( switch_action, switch_message_received )
-    await hass.components.mqtt.async_subscribe( motion_sensor_action, motion_sensor_message_received )
+    if has_switch:
+        await hass.components.mqtt.async_subscribe( switch_action, switch_message_received )
+    if has_motion_sensor:
+        await hass.components.mqtt.async_subscribe( motion_sensor_action, motion_sensor_message_received )
 
 
 class TheaterLight(LightEntity):
@@ -121,7 +126,8 @@ class TheaterLight(LightEntity):
 
 #        #temp = self.hass.states.get(harmony_entity).new_state
 #        #_LOGGER.error(f"Harmony state: {temp}")
-        event.async_track_state_change_event(self.hass, harmony_entity, self.harmony_update)
+        if has_harmony:
+            event.async_track_state_change_event(self.hass, harmony_entity, self.harmony_update)
 
         self.async_schedule_update_ha_state(force_refresh=True)
 
@@ -170,7 +176,6 @@ class TheaterLight(LightEntity):
     def is_on(self) -> bool | None:
         """Return true if light is on."""
         return self._is_on
-        #return self._state == "on"
 
     @property
     def device_info(self):
@@ -252,10 +257,7 @@ class TheaterLight(LightEntity):
 #        return data
 
     async def async_turn_on(self, **kwargs) -> None:
-        """Instruct the light to turn on.
-        You can skip the brightness part if your light does not support
-        brightness control.
-        """
+        """Instruct the light to turn on."""
         _LOGGER.error(f"THEATER_LIGHT ASYNC_TURN_ON: {kwargs}")
         if 'brightness' in kwargs:
             self._brightness = kwargs['brightness']
@@ -267,19 +269,26 @@ class TheaterLight(LightEntity):
         else:
             self.switched_on = True
 
+        if 'source' in kwargs and kwargs['source'] == "Switch":
+            # Assume RightLight mode for all switch presses
+            rl = True
+        elif self._is_on == False:
+            # If light is off, default to RightLight mode (can be overriden with color/colortemp attributes)
+            rl = True
+        else:
+            rl = False
+        #rl = True
+
 #        def_br = 255 if self._brightness == 0 else self._brightness
 #        self._brightness = kwargs.get(ATTR_BRIGHTNESS, def_br)
         self._is_on = True
         self._mode = "On"
-
-        rl = True
         data = {ATTR_ENTITY_ID: self._light, 'transition': 0.1}
 
         if ATTR_HS_COLOR in kwargs:
             rl = False
             data[ATTR_HS_COLOR] = kwargs[ATTR_HS_COLOR]
         if ATTR_BRIGHTNESS in kwargs:
-            data[ATTR_BRIGHTNESS] = kwargs[ATTR_BRIGHTNESS]
         if ATTR_COLOR_TEMP in kwargs:
             rl = False
             data[ATTR_COLOR_TEMP] = kwargs[ATTR_COLOR_TEMP]
@@ -293,8 +302,6 @@ class TheaterLight(LightEntity):
             await self._rightlight.turn_on(brightness=self._brightness, brightness_override=self._brightness_override)
         else:
             await self._rightlight.turn_on_specific(data)
-            #await self._rightlight.disable()
-            #await self.hass.services.async_call("light", "turn_on", data, blocking=True, limit=2)
 
         self._updateState()
 
@@ -312,7 +319,6 @@ class TheaterLight(LightEntity):
         self._is_on = True
         self._brightness = 255
         self.switched_on = True
-        #self._state = "on"
         await self._rightlight.turn_on(mode=self._mode)
         self._updateState()
         self.async_schedule_update_ha_state(force_refresh=True)
@@ -324,7 +330,6 @@ class TheaterLight(LightEntity):
         self._brightness_override = 0
         self._is_on = False
         self.switched_on = False
-        #self._state = "off"
         await self._rightlight.disable_and_turn_off()
         self._updateState()
 
@@ -404,18 +409,18 @@ class TheaterLight(LightEntity):
 
         self.switched_on = True
         if payload == "on-press":
-            await self.async_turn_on()
+            await self.async_turn_on(source="Switch")
         elif payload == "on-hold":
-            await self.async_turn_on_mode(mode="Vivid")
+            await self.async_turn_on_mode(mode="Vivid", source="Switch")
         elif payload == "off-press":
             self.switched_on = False
-            await self.async_turn_off()
+            await self.async_turn_off(source="Switch")
         elif payload == "up-press":
-            await self.up_brightness()
+            await self.up_brightness(source="Switch")
         elif payload == "up-hold":
-            await self.async_turn_on_mode(mode="Bright")
+            await self.async_turn_on_mode(mode="Bright", source="Switch")
         elif payload == "down-press":
-            await self.down_brightness()
+            await self.down_brightness(source="Switch")
         else:
             self._updateState(f"Fail: {payload}")
 
@@ -429,8 +434,12 @@ class TheaterLight(LightEntity):
         self._updateState()
 
         # Disable motion sensor tracking if the lights are switched on or the harmony is on
-        if self.switched_on or self.harmony_on:
-            return
+        if has_harmony:
+            if self.switched_on or self.harmony_on:
+                return
+        else:
+            if self.switched_on:
+                return
 
         if self._occupancy:
             await self.async_turn_on(brightness=motion_sensor_brightness, source='MotionSensor')
