@@ -52,6 +52,7 @@ harmony_entity = "remote.theater_harmony_hub"
 switch_action = "zigbee2mqtt/Theater Switch/action"
 motion_sensor_action = "zigbee2mqtt/Theater Motion Sensor"
 brightness_step = 43
+motion_sensor_brightness = 192
 
 async def async_setup_platform(
     hass: HomeAssistant,
@@ -261,6 +262,11 @@ class TheaterLight(LightEntity):
         elif self._brightness == 0:
             self._brightness = 255
 
+        if 'source' in kwargs and kwargs['source'] == 'MotionSensor':
+            pass
+        else:
+            self.switched_on = True
+
 #        def_br = 255 if self._brightness == 0 else self._brightness
 #        self._brightness = kwargs.get(ATTR_BRIGHTNESS, def_br)
         self._is_on = True
@@ -305,6 +311,7 @@ class TheaterLight(LightEntity):
         self._mode = kwargs.get("mode", "Vivid")
         self._is_on = True
         self._brightness = 255
+        self.switched_on = True
         #self._state = "on"
         await self._rightlight.turn_on(mode=self._mode)
         self._updateState()
@@ -316,6 +323,7 @@ class TheaterLight(LightEntity):
         self._brightness = 0
         self._brightness_override = 0
         self._is_on = False
+        self.switched_on = False
         #self._state = "off"
         await self._rightlight.disable_and_turn_off()
         self._updateState()
@@ -425,6 +433,6 @@ class TheaterLight(LightEntity):
             return
 
         if self._occupancy:
-            await self.async_turn_on(brightness=192)
+            await self.async_turn_on(brightness=motion_sensor_brightness, source='MotionSensor')
         else:
             await self.async_turn_off()
