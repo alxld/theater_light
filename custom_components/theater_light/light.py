@@ -289,6 +289,7 @@ class TheaterLight(LightEntity):
             rl = False
             data[ATTR_HS_COLOR] = kwargs[ATTR_HS_COLOR]
         if ATTR_BRIGHTNESS in kwargs:
+            data[ATTR_BRIGHTNESS] = kwargs[ATTR_BRIGHTNESS]
         if ATTR_COLOR_TEMP in kwargs:
             rl = False
             data[ATTR_COLOR_TEMP] = kwargs[ATTR_COLOR_TEMP]
@@ -340,7 +341,7 @@ class TheaterLight(LightEntity):
         self.async_schedule_update_ha_state(force_refresh=True)
         #self.async_write_ha_state()
 
-    async def up_brightness(self) -> None:
+    async def up_brightness(self, **kwargs) -> None:
         """Increase brightness by one step"""
         if self._brightness == None:
             self._brightness = brightness_step
@@ -350,20 +351,20 @@ class TheaterLight(LightEntity):
         else:
             self._brightness = self._brightness + brightness_step
 
-        await self.async_turn_on(brightness=self._brightness)
+        await self.async_turn_on(brightness=self._brightness, kwargs)
 
-    async def down_brightness(self) -> None:
+    async def down_brightness(self, **kwargs) -> None:
         """Decrease brightness by one step"""
         if self._brightness == None:
-            await self.async_turn_off()
+            await self.async_turn_off(kwargs)
         elif self._brightness_override > 0:
             self._brightness_override = 0
-            await self.async_turn_on(brightness=self._brightness)
+            await self.async_turn_on(brightness=self._brightness, kwargs)
         elif self._brightness < brightness_step:
-            await self.async_turn_off()
+            await self.async_turn_off(kwargs)
         else:
             self._brightness = self._brightness - brightness_step
-            await self.async_turn_on(brightness=self._brightness)
+            await self.async_turn_on(brightness=self._brightness, kwargs)
 
     async def async_update(self):
         """Query light and determine the state."""
