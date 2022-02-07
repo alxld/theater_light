@@ -351,20 +351,20 @@ class TheaterLight(LightEntity):
         else:
             self._brightness = self._brightness + brightness_step
 
-        await self.async_turn_on(brightness=self._brightness, kwargs)
+        await self.async_turn_on(brightness=self._brightness, **kwargs)
 
     async def down_brightness(self, **kwargs) -> None:
         """Decrease brightness by one step"""
         if self._brightness == None:
-            await self.async_turn_off(kwargs)
+            await self.async_turn_off(**kwargs)
         elif self._brightness_override > 0:
             self._brightness_override = 0
-            await self.async_turn_on(brightness=self._brightness, kwargs)
+            await self.async_turn_on(brightness=self._brightness, **kwargs)
         elif self._brightness < brightness_step:
-            await self.async_turn_off(kwargs)
+            await self.async_turn_off(**kwargs)
         else:
             self._brightness = self._brightness - brightness_step
-            await self.async_turn_on(brightness=self._brightness, kwargs)
+            await self.async_turn_on(brightness=self._brightness, **kwargs)
 
     async def async_update(self):
         """Query light and determine the state."""

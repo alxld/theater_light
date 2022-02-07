@@ -101,10 +101,12 @@ class RightLight:
             await self._hass.services.async_call("light", "turn_on", {"entity_id": self._entity, "brightness": br, "kelvin": ct, "transition": self.on_transition}, blocking=True, limit=2)
 
             # Transition to next values
-            self._hass.loop.call_later(self.on_transition + 0.5, asyncio.create_task, self._turn_on_specific({"entity_id": self._entity, "brightness": br_next, "kelvin": ct_next, "transition": time_rem}))
+            #self._hass.loop.call_later(self.on_transition + 0.5, asyncio.create_task, self._turn_on_specific({"entity_id": self._entity, "brightness": br_next, "kelvin": ct_next, "transition": time_rem}))
+            self._hass.loop.call_later(self.on_transition + 0.5, self._hass.loop.create_task, self._turn_on_specific({"entity_id": self._entity, "brightness": br_next, "kelvin": ct_next, "transition": time_rem}))
 
             # Schedule another turn_on at next_time to start the next transition
-            ret = self._hass.loop.call_later((next_time - self.now).seconds, asyncio.create_task, self.turn_on(brightness=self._brightness, brightness_override=self._brightness_override))
+            #ret = self._hass.loop.call_later((next_time - self.now).seconds, asyncio.create_task, self.turn_on(brightness=self._brightness, brightness_override=self._brightness_override))
+            ret = self._hass.loop.call_later((next_time - self.now).seconds, self._hass.loop.create_task, self.turn_on(brightness=self._brightness, brightness_override=self._brightness_override))
             self._addSched(ret)
 
         else:
@@ -124,15 +126,18 @@ class RightLight:
             await self._hass.services.async_call("light", "turn_on", {"entity_id": self._entity, "brightness": 255, "rgb_color": now_rgb, "transition": self.on_color_transition}, blocking=True, limit=2)
 
             # Transition to next values
-            self._hass.loop.call_later(self.on_color_transition + 0.5, asyncio.create_task, self._turn_on_specific({"entity_id": self._entity, "brightness": 255, "rgb_color": next_rgb, "transition": time_rem}))
+            #self._hass.loop.call_later(self.on_color_transition + 0.5, asyncio.create_task, self._turn_on_specific({"entity_id": self._entity, "brightness": 255, "rgb_color": next_rgb, "transition": time_rem}))
+            self._hass.loop.call_later(self.on_color_transition + 0.5, self._hass.loop.create_task, self._turn_on_specific({"entity_id": self._entity, "brightness": 255, "rgb_color": next_rgb, "transition": time_rem}))
 
             # Schedule another turn on at next_time to start the next transition
-            ret = self._hass.loop.call_later((next_time - self.now).seconds, asyncio.create_task, self.turn_on(mode=self._mode))
+            #ret = self._hass.loop.call_later((next_time - self.now).seconds, asyncio.create_task, self.turn_on(mode=self._mode))
+            ret = self._hass.loop.call_later((next_time - self.now).seconds, self._hass.loop.create_task, self.turn_on(mode=self._mode))
             self._addSched(ret)
 
     async def _turn_on_specific(self, data) -> None:
         """ Disables RightLight functionality and sets light to values in 'data' variable"""
-        await self._hass.services.async_call("light", "turn_on", data, blocking=True, limit=2)
+        self._logger.error(f"THEATER _turn_on_specific: {data}")
+        await self._hass.services.async_call("light", "turn_on", data)
 
     async def turn_on_specific(self, data) -> None:
         """ External version of _turn_on_specific that runs twice to ensure successful transition """
