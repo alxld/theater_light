@@ -110,6 +110,11 @@ class TheaterLight(LightEntity):
         self._effect_list: Optional[List[str]] = None
         self._effect: Optional[str] = None
         self._supported_features: int = 0
+        self._supported_features |= SUPPORT_BRIGHTNESS
+        self._supported_features |= SUPPORT_COLOR_TEMP
+        self._supported_features |= SUPPORT_COLOR
+        self._supported_features |= SUPPORT_TRANSITION
+        self._supported_features |= SUPPORT_WHITE_VALUE
 
         # Record whether a switch was used to turn on this light
         self.switched_on = False
@@ -390,9 +395,9 @@ class TheaterLight(LightEntity):
         self._effect_list = state.attributes.get(ATTR_EFFECT_LIST)
 #        self._effect = state.attributes.get(ATTR_EFFECT)
 
-        self._supported_features = state.attributes.get(ATTR_SUPPORTED_FEATURES)
+#        self._supported_features = state.attributes.get(ATTR_SUPPORTED_FEATURES)
         # Bitwise-or the supported features with the color temp feature
-        self._supported_features |= SUPPORT_COLOR_TEMP
+#        self._supported_features |= SUPPORT_COLOR_TEMP
 
 #    def update(self) -> None:
 #        """Fetch new state data for this light.
@@ -410,7 +415,8 @@ class TheaterLight(LightEntity):
 
         self.switched_on = True
         if payload == "on-press":
-            await self.async_turn_on(source="Switch")
+            self._brightness_override = 0
+            await self.async_turn_on(source="Switch", brightness=255)
         elif payload == "on-hold":
             await self.async_turn_on_mode(mode="Vivid", source="Switch")
         elif payload == "off-press":

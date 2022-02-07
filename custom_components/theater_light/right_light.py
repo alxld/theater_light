@@ -4,7 +4,7 @@ from homeassistant.util import dt
 import logging
 from suntime import Sun
 from datetime import date, timedelta
-import datetime, asyncio
+#import datetime, asyncio
 
 class RightLight:
     """RightLight object to control a single light or light group"""
@@ -23,6 +23,8 @@ class RightLight:
 
         self._ct_high = 5000
         self._ct_scalar = 0.35
+
+        self._br_over_ct_mult = 6
 
         self.on_transition = 0.1
         self.on_color_transition = 0.1
@@ -95,7 +97,7 @@ class RightLight:
             if br > 255:
                 br_over = br - 255
                 br = 255
-                ct = ct + br_over * 2
+                ct = ct + br_over * self._br_over_ct_mult
             if br_next > 255:
                 br_next = 255
 
@@ -148,10 +150,12 @@ class RightLight:
         await self.disable()
 
         data['transition'] = 0.2
-        data['brightness'] = 255
+        if not 'brightness' in data:
+            data['brightness'] = 255
 
         await self._turn_on_specific(data)
-        self._hass.loop.call_later(0.6, asyncio.create_task, self._turn_on_specific(data))
+        #self._hass.loop.call_later(0.6, asyncio.create_task, self._turn_on_specific(data))
+        self._hass.loop.call_later(0.6, self._hass.loop.create_task, self._turn_on_specific(data))
         #await asyncio.sleep(0.2)
         #await self._turn_on_specific(data)
 
