@@ -93,7 +93,11 @@ class RightLight:
             ct = (ct_next - ct_prev) * time_ratio + ct_prev
 
             if br > 255:
+                br_over = br - 255
                 br = 255
+                ct = ct + br_over * 2
+            if br_next > 255:
+                br_next = 255
 
             self._logger.error(f"Final: {br}/{ct} -> {time_rem}sec")
 
@@ -106,7 +110,7 @@ class RightLight:
 
             # Schedule another turn_on at next_time to start the next transition
             #ret = self._hass.loop.call_later((next_time - self.now).seconds, asyncio.create_task, self.turn_on(brightness=self._brightness, brightness_override=self._brightness_override))
-            ret = self._hass.loop.call_later((next_time - self.now).seconds, self._hass.loop.create_task, self.turn_on(brightness=self._brightness, brightness_override=self._brightness_override))
+            ret = self._hass.loop.call_later((next_time - self.now).seconds + 1, self._hass.loop.create_task, self.turn_on(brightness=self._brightness, brightness_override=self._brightness_override))
             self._addSched(ret)
 
         else:
@@ -131,7 +135,7 @@ class RightLight:
 
             # Schedule another turn on at next_time to start the next transition
             #ret = self._hass.loop.call_later((next_time - self.now).seconds, asyncio.create_task, self.turn_on(mode=self._mode))
-            ret = self._hass.loop.call_later((next_time - self.now).seconds, self._hass.loop.create_task, self.turn_on(mode=self._mode))
+            ret = self._hass.loop.call_later((next_time - self.now).seconds + 1, self._hass.loop.create_task, self.turn_on(mode=self._mode))
             self._addSched(ret)
 
     async def _turn_on_specific(self, data) -> None:
