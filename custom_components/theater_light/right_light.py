@@ -188,8 +188,8 @@ class RightLight:
         if rerun:
             self.sunrise = dt.as_local( self.sun.get_sunrise_time() )
             self.sunset  = dt.as_local( self.sun.get_sunset_time()  )
-            self.sunrise = self.sunrise.replace(day=self.now.day)
-            self.sunset = self.sunset.replace(day=self.now.day)
+            self.sunrise = self.sunrise.replace(day=self.now.day, month=self.now.month, year=self.now.year)
+            self.sunset = self.sunset.replace(day=self.now.day, month=self.now.month, year=self.now.year)
             self.midnight_early = self.now.replace(microsecond=0, second=0, minute=0, hour=0)
             self.midnight_late  = self.now.replace(microsecond=0, second=59, minute=59, hour=23)
 
