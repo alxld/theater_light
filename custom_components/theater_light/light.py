@@ -218,6 +218,7 @@ class TheaterLight(LightEntity):
         ns = ev["data"]["new_state"].state
         if ns == "on":
             await self.async_turn_off()
+
             await self.hass.services.async_call(
                 "light", "turn_off", {"entity_id": outside_near_group}
             )
