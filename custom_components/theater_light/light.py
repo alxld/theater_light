@@ -1,8 +1,9 @@
 """Platform for light integration"""
 from __future__ import annotations
 import logging, json
-#from enum import Enum
-#import homeassistant.helpers.config_validation as cv
+
+# from enum import Enum
+# import homeassistant.helpers.config_validation as cv
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
@@ -28,7 +29,7 @@ from homeassistant.components.light import (
     SUPPORT_FLASH,
     SUPPORT_TRANSITION,
     SUPPORT_WHITE_VALUE,
-    LightEntity
+    LightEntity,
 )
 from homeassistant.const import (
     ATTR_ENTITY_ID,
@@ -49,6 +50,10 @@ _LOGGER = logging.getLogger(__name__)
 
 light_entity = "light.theater_group"
 harmony_entity = "remote.theater_harmony_hub"
+harmony_button_1 = "light.harmony_button_1"
+harmony_button_2 = "light.harmony_button_2"
+harmony_button_3 = "light.harmony_button_3"
+harmony_button_4 = "light.harmony_button_4"
 switch_action = "zigbee2mqtt/Theater Switch/action"
 motion_sensor_action = "zigbee2mqtt/Theater Motion Sensor"
 brightness_step = 43
@@ -56,6 +61,7 @@ motion_sensor_brightness = 192
 has_harmony = True
 has_motion_sensor = True
 has_switch = True
+
 
 async def async_setup_platform(
     hass: HomeAssistant,
@@ -76,14 +82,20 @@ async def async_setup_platform(
         await ent.switch_message_received(topic, payload, qos)
 
     @callback
-    async def motion_sensor_message_received(topic: str, payload: str, qos: int) -> None:
+    async def motion_sensor_message_received(
+        topic: str, payload: str, qos: int
+    ) -> None:
         """A new motion sensor MQTT message has been received"""
         await ent.motion_sensor_message_received(topic, json.loads(payload), qos)
 
     if has_switch:
-        await hass.components.mqtt.async_subscribe( switch_action, switch_message_received )
+        await hass.components.mqtt.async_subscribe(
+            switch_action, switch_message_received
+        )
     if has_motion_sensor:
-        await hass.components.mqtt.async_subscribe( motion_sensor_action, motion_sensor_message_received )
+        await hass.components.mqtt.async_subscribe(
+            motion_sensor_action, motion_sensor_message_received
+        )
 
 
 class TheaterLight(LightEntity):
@@ -93,7 +105,7 @@ class TheaterLight(LightEntity):
         """Initialize Theater Light."""
         self._light = light_entity
         self._name = "Theater"
-        #self._state = 'off'
+        # self._state = 'off'
         self._brightness = 0
         self._brightness_override = 0
         self._hs_color: Optional[Tuple[float, float]] = None
@@ -119,25 +131,41 @@ class TheaterLight(LightEntity):
         # Record whether a switch was used to turn on this light
         self.switched_on = False
 
-        # Track if the Theater Harmony is on
+        # Track if the Harmony is on
         self.harmony_on = False
 
         # self.hass.states.async_set(f"light.{self._name}", "Initialized")
-        _LOGGER.info("TheaterLight initialized")
+        _LOGGER.info(f"{self._name} Light initialized")
 
     async def async_added_to_hass(self) -> None:
         """Instantiate RightLight"""
         self._rightlight = RightLight(self._light, self.hass)
 
-#        #temp = self.hass.states.get(harmony_entity).new_state
-#        #_LOGGER.error(f"Harmony state: {temp}")
+        #        #temp = self.hass.states.get(harmony_entity).new_state
+        #        #_LOGGER.error(f"Harmony state: {temp}")
         if has_harmony:
-            event.async_track_state_change_event(self.hass, harmony_entity, self.harmony_update)
+            event.async_track_state_change_event(
+                self.hass, harmony_entity, self.harmony_update
+            )
 
         self.async_schedule_update_ha_state(force_refresh=True)
 
+        # Track harmony button template lights
+        event.async_track_state_change_event(
+            self.hass, harmony_button_1, self.harmony_button_1_update
+        )
+        event.async_track_state_change_event(
+            self.hass, harmony_button_2, self.harmony_button_2_update
+        )
+        event.async_track_state_change_event(
+            self.hass, harmony_button_3, self.harmony_button_3_update
+        )
+        event.async_track_state_change_event(
+            self.hass, harmony_button_4, self.harmony_button_4_update
+        )
+
         # Not working.  Light starts up an sends None=>Off, Off=>Off, Off=>On, but not sure if that's always the case
-        #event.async_track_state_change_event(self.hass, self._light, self.light_update)
+        # event.async_track_state_change_event(self.hass, self._light, self.light_update)
 
     @callback
     async def harmony_update(self, this_event):
@@ -149,23 +177,48 @@ class TheaterLight(LightEntity):
         else:
             self.harmony_on = False
 
-    #@callback
-    #async def light_update(self, this_event):
+    @callback
+    async def harmony_button_1_update(self, this_event):
+        """Handle Harmony button 1 press"""
+        await self.async_turn_on(brightness=175)
+        await self._hass.services.async_call("light", "turn_off", harmony_button_1)
+
+    @callback
+    async def harmony_button_2_update(self, this_event):
+        """Handle Harmony button 2 press"""
+        await self.async_turn_on(brightness=100)
+        await self._hass.services.async_call("light", "turn_off", harmony_button_2)
+
+    @callback
+    async def harmony_button_3_update(self, this_event):
+        """Handle Harmony button 3 press"""
+        await self.async_turn_on(brightness=50)
+        await self._hass.services.async_call("light", "turn_off", harmony_button_3)
+
+    @callback
+    async def harmony_button_4_update(self, this_event):
+        """Handle Harmony button 4 press"""
+        await self.async_turn_off()
+        await self._hass.services.async_call("light", "turn_off", harmony_button_4)
+
+    # @callback
+    # async def light_update(self, this_event):
     #    """Get initial light state"""
     #    ev = this_event.as_dict()
     #    if self._state == None and ev["data"]["old_state"] != None:
     #        _LOGGER.error(f"Light update: {this_event}")
 
-    def _updateState(self, comment = ""):
+    def _updateState(self, comment=""):
         pass
-        #self.hass.states.async_set(f"light.{self._name}", self._is_on, {"brightness": self._brightness,
+        # self.hass.states.async_set(f"light.{self._name}", self._is_on, {"brightness": self._brightness,
         #                                                                "brightness_override": self._brightness_override,
         #                                                                "switched_on": self.switched_on,
         #                                                                "harmony_on": self.harmony_on,
         #                                                                "occupancy": self._occupancy,
         #                                                                "mode": self._mode,
         #                                                                "comment": comment})
-#        self.hass.states.async_set(f"light.{self._name}", self._state, {"brightness": self._brightness, "brightness_override": self._brightness_override, "switched_on": self.switched_on, "mode": self._mode, "comment": comment})
+
+    #        self.hass.states.async_set(f"light.{self._name}", self._state, {"brightness": self._brightness, "brightness_override": self._brightness_override, "switched_on": self.switched_on, "mode": self._mode, "comment": comment})
 
     @property
     def should_poll(self):
@@ -190,7 +243,7 @@ class TheaterLight(LightEntity):
                 (DOMAIN, self.unique_id)
             },
             "name": self._name,
-            "manufacturer": "Aaron"
+            "manufacturer": "Aaron",
         }
         return prop
 
@@ -244,37 +297,37 @@ class TheaterLight(LightEntity):
         """Flag supported features."""
         return self._supported_features
 
-#    def capability_attributes(self):
-#        """Return capability attributes."""
-#        data = {}
-#        supported_features = self.supported_features
-#        supported_color_modes = self._light_internal_supported_color_modes
-#
-#        if COLOR_MODE_COLOR_TEMP in supported_color_modes:
-#            data[ATTR_MIN_MIREDS] = self.min_mireds
-#            data[ATTR_MAX_MIREDS] = self.max_mireds
-#
-#        if supported_features & SUPPORT_EFFECT:
-#            data[ATTR_EFFECT_LIST] = self.effect_list
-#
-#        data[ATTR_SUPPORTED_COLOR_MODES] = sorted(supported_color_modes)
-#
-#        return data
+    #    def capability_attributes(self):
+    #        """Return capability attributes."""
+    #        data = {}
+    #        supported_features = self.supported_features
+    #        supported_color_modes = self._light_internal_supported_color_modes
+    #
+    #        if COLOR_MODE_COLOR_TEMP in supported_color_modes:
+    #            data[ATTR_MIN_MIREDS] = self.min_mireds
+    #            data[ATTR_MAX_MIREDS] = self.max_mireds
+    #
+    #        if supported_features & SUPPORT_EFFECT:
+    #            data[ATTR_EFFECT_LIST] = self.effect_list
+    #
+    #        data[ATTR_SUPPORTED_COLOR_MODES] = sorted(supported_color_modes)
+    #
+    #        return data
 
     async def async_turn_on(self, **kwargs) -> None:
         """Instruct the light to turn on."""
-        _LOGGER.error(f"THEATER_LIGHT ASYNC_TURN_ON: {kwargs}")
-        if 'brightness' in kwargs:
-            self._brightness = kwargs['brightness']
+        _LOGGER.error(f"{self._name} LIGHT ASYNC_TURN_ON: {kwargs}")
+        if "brightness" in kwargs:
+            self._brightness = kwargs["brightness"]
         elif self._brightness == 0:
             self._brightness = 255
 
-        if 'source' in kwargs and kwargs['source'] == 'MotionSensor':
+        if "source" in kwargs and kwargs["source"] == "MotionSensor":
             pass
         else:
             self.switched_on = True
 
-        if 'source' in kwargs and kwargs['source'] == "Switch":
+        if "source" in kwargs and kwargs["source"] == "Switch":
             # Assume RightLight mode for all switch presses
             rl = True
         elif self._is_on == False:
@@ -282,13 +335,13 @@ class TheaterLight(LightEntity):
             rl = True
         else:
             rl = False
-        #rl = True
+        # rl = True
 
-#        def_br = 255 if self._brightness == 0 else self._brightness
-#        self._brightness = kwargs.get(ATTR_BRIGHTNESS, def_br)
+        #        def_br = 255 if self._brightness == 0 else self._brightness
+        #        self._brightness = kwargs.get(ATTR_BRIGHTNESS, def_br)
         self._is_on = True
         self._mode = "On"
-        data = {ATTR_ENTITY_ID: self._light, 'transition': 0.1}
+        data = {ATTR_ENTITY_ID: self._light, "transition": 0.1}
 
         if ATTR_HS_COLOR in kwargs:
             rl = False
@@ -305,20 +358,23 @@ class TheaterLight(LightEntity):
             data[ATTR_TRANSITION] = kwargs[ATTR_TRANSITION]
 
         if rl:
-            await self._rightlight.turn_on(brightness=self._brightness, brightness_override=self._brightness_override)
+            await self._rightlight.turn_on(
+                brightness=self._brightness,
+                brightness_override=self._brightness_override,
+            )
         else:
             await self._rightlight.turn_on_specific(data)
 
         self._updateState()
 
-#        # await self.hass.components.mqtt.async_publish(self.hass, "zigbee2mqtt/Office/set", f"{{\"brightness\": {self._brightness}, \"state\": \"on\"}}")
-#        await self.hass.services.async_call(
-#            "light",
-#            "turn_on",
-#            {"entity_id": self._light, "brightness": self._brightness},
-#        )
+        #        # await self.hass.components.mqtt.async_publish(self.hass, "zigbee2mqtt/Office/set", f"{{\"brightness\": {self._brightness}, \"state\": \"on\"}}")
+        #        await self.hass.services.async_call(
+        #            "light",
+        #            "turn_on",
+        #            {"entity_id": self._light, "brightness": self._brightness},
+        #        )
         self.async_schedule_update_ha_state(force_refresh=True)
-        #self.async_write_ha_state()
+        # self.async_write_ha_state()
 
     async def async_turn_on_mode(self, **kwargs: Any) -> None:
         self._mode = kwargs.get("mode", "Vivid")
@@ -328,7 +384,7 @@ class TheaterLight(LightEntity):
         await self._rightlight.turn_on(mode=self._mode)
         self._updateState()
         self.async_schedule_update_ha_state(force_refresh=True)
-        #self.async_write_ha_state()
+        # self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Instruct the light to turn off."""
@@ -339,12 +395,12 @@ class TheaterLight(LightEntity):
         await self._rightlight.disable_and_turn_off()
         self._updateState()
 
-#        # await self.hass.components.mqtt.async_publish(self.hass, "zigbee2mqtt/Office/set", "OFF"})
-#        await self.hass.services.async_call(
-#            "light", "turn_off", {"entity_id": self._light}
-#        )
+        #        # await self.hass.components.mqtt.async_publish(self.hass, "zigbee2mqtt/Office/set", "OFF"})
+        #        await self.hass.services.async_call(
+        #            "light", "turn_off", {"entity_id": self._light}
+        #        )
         self.async_schedule_update_ha_state(force_refresh=True)
-        #self.async_write_ha_state()
+        # self.async_write_ha_state()
 
     async def up_brightness(self, **kwargs) -> None:
         """Increase brightness by one step"""
@@ -373,44 +429,45 @@ class TheaterLight(LightEntity):
 
     async def async_update(self):
         """Query light and determine the state."""
-        _LOGGER.error("THEATER_LIGHT ASYNC_UPDATE")
+        _LOGGER.error(f"{self._name} LIGHT ASYNC_UPDATE")
         state = self.hass.states.get(self._light)
 
         if state == None:
             return
 
-#        self._is_on = (state.state == STATE_ON)
-#        self._available = (state.state != STATE_UNAVAILABLE)
+        #        self._is_on = (state.state == STATE_ON)
+        #        self._available = (state.state != STATE_UNAVAILABLE)
 
-#        self._brightness = state.attributes.get(ATTR_BRIGHTNESS)
+        #        self._brightness = state.attributes.get(ATTR_BRIGHTNESS)
 
-#        self._hs_color = state.attributes.get(ATTR_HS_COLOR)
+        #        self._hs_color = state.attributes.get(ATTR_HS_COLOR)
 
-#        self._white_value = state.attributes.get(ATTR_WHITE_VALUE)
+        #        self._white_value = state.attributes.get(ATTR_WHITE_VALUE)
 
-#        self._color_temp = state.attributes.get(ATTR_COLOR_TEMP, self._color_temp)
-#        self._min_mireds = state.attributes.get(ATTR_MIN_MIREDS, 154)
-#        self._max_mireds = state.attributes.get(ATTR_MAX_MIREDS, 500)
+        #        self._color_temp = state.attributes.get(ATTR_COLOR_TEMP, self._color_temp)
+        #        self._min_mireds = state.attributes.get(ATTR_MIN_MIREDS, 154)
+        #        self._max_mireds = state.attributes.get(ATTR_MAX_MIREDS, 500)
 
         self._effect_list = state.attributes.get(ATTR_EFFECT_LIST)
-#        self._effect = state.attributes.get(ATTR_EFFECT)
 
-#        self._supported_features = state.attributes.get(ATTR_SUPPORTED_FEATURES)
-        # Bitwise-or the supported features with the color temp feature
-#        self._supported_features |= SUPPORT_COLOR_TEMP
+    #        self._effect = state.attributes.get(ATTR_EFFECT)
 
-#    def update(self) -> None:
-#        """Fetch new state data for this light.
-#        This is the only method that should fetch new data for Home Assistant.
-#        """
-#        # self._light.update()
-#        # self._state = self._light.is_on()
-#        # self._brightness = self._light.brightness
-#        self._updateState()
+    #        self._supported_features = state.attributes.get(ATTR_SUPPORTED_FEATURES)
+    # Bitwise-or the supported features with the color temp feature
+    #        self._supported_features |= SUPPORT_COLOR_TEMP
+
+    #    def update(self) -> None:
+    #        """Fetch new state data for this light.
+    #        This is the only method that should fetch new data for Home Assistant.
+    #        """
+    #        # self._light.update()
+    #        # self._state = self._light.is_on()
+    #        # self._brightness = self._light.brightness
+    #        self._updateState()
 
     async def switch_message_received(self, topic: str, payload: str, qos: int) -> None:
         """A new MQTT message has been received."""
-        #self.hass.states.async_set(f"light.{self._name}", f"ENT: {payload}")
+        # self.hass.states.async_set(f"light.{self._name}", f"ENT: {payload}")
         self._updateState(f"{payload}")
 
         self.switched_on = True
@@ -431,7 +488,9 @@ class TheaterLight(LightEntity):
         else:
             self._updateState(f"Fail: {payload}")
 
-    async def motion_sensor_message_received(self, topic: str, payload: str, qos: int) -> None:
+    async def motion_sensor_message_received(
+        self, topic: str, payload: str, qos: int
+    ) -> None:
         """A new MQTT message has been received."""
         if self._occupancy == payload["occupancy"]:
             # No change to state
@@ -449,6 +508,8 @@ class TheaterLight(LightEntity):
                 return
 
         if self._occupancy:
-            await self.async_turn_on(brightness=motion_sensor_brightness, source='MotionSensor')
+            await self.async_turn_on(
+                brightness=motion_sensor_brightness, source="MotionSensor"
+            )
         else:
             await self.async_turn_off()
