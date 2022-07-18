@@ -54,6 +54,7 @@ harmony_button_1 = "light.harmony_button_1"
 harmony_button_2 = "light.harmony_button_2"
 harmony_button_3 = "light.harmony_button_3"
 harmony_button_4 = "light.harmony_button_4"
+outside_near_group = "light.outside_near_group"
 switch_action = "zigbee2mqtt/Theater Switch/action"
 motion_sensor_action = "zigbee2mqtt/Theater Motion Sensor"
 brightness_step = 43
@@ -217,6 +218,9 @@ class TheaterLight(LightEntity):
         ns = ev["data"]["new_state"].state
         if ns == "on":
             await self.async_turn_off()
+            await self.hass.services.async_call(
+                "light", "turn_off", {"entity_id": outside_near_group}
+            )
             await self.hass.services.async_call(
                 "light", "turn_off", {"entity_id": harmony_button_4}
             )
