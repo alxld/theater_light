@@ -184,7 +184,7 @@ class TheaterLight(LightEntity):
         ns = ev["data"]["new_state"].state
         if ns == "on":
             await self.async_turn_on(brightness=175)
-            await self._hass.services.async_call(
+            await self.hass.services.async_call(
                 "light", "turn_off", {"entity_id": harmony_button_1}
             )
 
@@ -195,7 +195,7 @@ class TheaterLight(LightEntity):
         ns = ev["data"]["new_state"].state
         if ns == "on":
             await self.async_turn_on(brightness=100)
-            await self._hass.services.async_call(
+            await self.hass.services.async_call(
                 "light", "turn_off", {"entity_id": harmony_button_2}
             )
 
@@ -206,7 +206,7 @@ class TheaterLight(LightEntity):
         ns = ev["data"]["new_state"].state
         if ns == "on":
             await self.async_turn_on(brightness=50)
-            await self._hass.services.async_call(
+            await self.hass.services.async_call(
                 "light", "turn_off", {"entity_id": harmony_button_3}
             )
 
@@ -217,7 +217,7 @@ class TheaterLight(LightEntity):
         ns = ev["data"]["new_state"].state
         if ns == "on":
             await self.async_turn_off()
-            await self._hass.services.async_call(
+            await self.hass.services.async_call(
                 "light", "turn_off", {"entity_id": harmony_button_4}
             )
 
