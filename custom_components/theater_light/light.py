@@ -180,26 +180,46 @@ class TheaterLight(LightEntity):
     @callback
     async def harmony_button_1_update(self, this_event):
         """Handle Harmony button 1 press"""
-        await self.async_turn_on(brightness=175)
-        await self._hass.services.async_call("light", "turn_off", harmony_button_1)
+        ev = this_event.as_dict()
+        ns = ev["data"]["new_state"].state
+        if ns == "on":
+            await self.async_turn_on(brightness=175)
+            await self._hass.services.async_call(
+                "light", "turn_off", {"entity_id": harmony_button_1}
+            )
 
     @callback
     async def harmony_button_2_update(self, this_event):
         """Handle Harmony button 2 press"""
-        await self.async_turn_on(brightness=100)
-        await self._hass.services.async_call("light", "turn_off", harmony_button_2)
+        ev = this_event.as_dict()
+        ns = ev["data"]["new_state"].state
+        if ns == "on":
+            await self.async_turn_on(brightness=100)
+            await self._hass.services.async_call(
+                "light", "turn_off", {"entity_id": harmony_button_2}
+            )
 
     @callback
     async def harmony_button_3_update(self, this_event):
         """Handle Harmony button 3 press"""
-        await self.async_turn_on(brightness=50)
-        await self._hass.services.async_call("light", "turn_off", harmony_button_3)
+        ev = this_event.as_dict()
+        ns = ev["data"]["new_state"].state
+        if ns == "on":
+            await self.async_turn_on(brightness=50)
+            await self._hass.services.async_call(
+                "light", "turn_off", {"entity_id": harmony_button_3}
+            )
 
     @callback
     async def harmony_button_4_update(self, this_event):
         """Handle Harmony button 4 press"""
-        await self.async_turn_off()
-        await self._hass.services.async_call("light", "turn_off", harmony_button_4)
+        ev = this_event.as_dict()
+        ns = ev["data"]["new_state"].state
+        if ns == "on":
+            await self.async_turn_off()
+            await self._hass.services.async_call(
+                "light", "turn_off", {"entity_id": harmony_button_4}
+            )
 
     # @callback
     # async def light_update(self, this_event):
