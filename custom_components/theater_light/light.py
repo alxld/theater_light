@@ -19,7 +19,7 @@ from homeassistant.components.light import (
     ATTR_MAX_MIREDS,
     ATTR_MIN_MIREDS,
     ATTR_TRANSITION,
-    ATTR_WHITE_VALUE,
+    # ATTR_WHITE_VALUE,
     ENTITY_ID_FORMAT,
     PLATFORM_SCHEMA,
     SUPPORT_BRIGHTNESS,
@@ -28,8 +28,10 @@ from homeassistant.components.light import (
     SUPPORT_EFFECT,
     SUPPORT_FLASH,
     SUPPORT_TRANSITION,
-    SUPPORT_WHITE_VALUE,
+    # SUPPORT_WHITE_VALUE,
     LightEntity,
+    ATTR_COLOR_MODE,
+    ATTR_SUPPORTED_COLOR_MODES,
 )
 from homeassistant.const import (
     ATTR_ENTITY_ID,
@@ -127,7 +129,7 @@ class TheaterLight(LightEntity):
         self._supported_features |= SUPPORT_COLOR_TEMP
         self._supported_features |= SUPPORT_COLOR
         self._supported_features |= SUPPORT_TRANSITION
-        self._supported_features |= SUPPORT_WHITE_VALUE
+        # self._supported_features |= SUPPORT_WHITE_VALUE
 
         # Record whether a switch was used to turn on this light
         self.switched_on = False
@@ -376,9 +378,12 @@ class TheaterLight(LightEntity):
         if ATTR_COLOR_TEMP in kwargs:
             rl = False
             data[ATTR_COLOR_TEMP] = kwargs[ATTR_COLOR_TEMP]
-        if ATTR_WHITE_VALUE in kwargs:
+        if ATTR_COLOR_MODE in kwargs:
             rl = False
-            data[ATTR_WHITE_VALUE] = kwargs[ATTR_WHITE_VALUE]
+            data[ATTR_COLOR_MODE] = kwargs[ATTR_COLOR_MODE]
+        # if ATTR_WHITE_VALUE in kwargs:
+        #    rl = False
+        #    data[ATTR_WHITE_VALUE] = kwargs[ATTR_WHITE_VALUE]
         if ATTR_TRANSITION in kwargs:
             data[ATTR_TRANSITION] = kwargs[ATTR_TRANSITION]
 
