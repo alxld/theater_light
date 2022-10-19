@@ -565,9 +565,14 @@ class TheaterLight(LightEntity):
         _LOGGER.error(f"{self._name} aqara action: Topic: {topic}, Payload: {payload}")
         if payload == "flip90":
             state = self.hass.states.get(self._dartboard)
-            _LOGGER.error(f"{self._name} aqara action: state: {state}
-            await self._rightlight_db.turn_on(mode="Vivid")
-            await self._rightlight_ar.turn_on(mode="Vivid")
+            _LOGGER.error(f"{self._name} aqara action: state: {state}")
+            _LOGGER.error(f"{self._name} aqara action: state.state: {state.state}")
+            if state.state == "on":
+                await self._rightlight_db.turn_off()
+                await self._rightlight_ar.turn_off()
+            else:
+                await self._rightlight_db.turn_on(mode="Vivid")
+                await self._rightlight_ar.turn_on(mode="Vivid")
         elif payload == "flip180":
             pass
         elif payload == "rotate_right":
