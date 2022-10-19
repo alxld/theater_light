@@ -51,6 +51,8 @@ from . import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 light_entity = "light.theater_group"
+dartboard_entity = "light.dart_board"
+arcade_entity = "light.arcade"
 harmony_entity = "remote.theater_harmony_hub"
 harmony_button_1 = "light.harmony_button_1"
 harmony_button_2 = "light.harmony_button_2"
@@ -59,11 +61,13 @@ harmony_button_4 = "light.harmony_button_4"
 outside_near_group = "light.outside_near_group"
 switch_action = "zigbee2mqtt/Theater Switch/action"
 motion_sensor_action = "zigbee2mqtt/Theater Motion Sensor"
+aqara_action = "zigbee2mqtt/AqaraTest/action"
 brightness_step = 43
 motion_sensor_brightness = 192
 has_harmony = True
 has_motion_sensor = True
 has_switch = True
+has_aqara = True
 
 
 async def async_setup_platform(
@@ -85,6 +89,11 @@ async def async_setup_platform(
         await ent.switch_message_received(topic, payload, qos)
 
     @callback
+    async def aqara_message_received(topic: str, payload: str, qor: int) -> None:
+        """A new MQTT aqara message has been received."""
+        await ent.aqara_message_received(topic, payload, qos)
+
+    @callback
     async def motion_sensor_message_received(
         topic: str, payload: str, qos: int
     ) -> None:
@@ -99,6 +108,8 @@ async def async_setup_platform(
         await hass.components.mqtt.async_subscribe(
             motion_sensor_action, motion_sensor_message_received
         )
+    if has_aqara:
+        await hass.components.mqtt.async_subscribe(aqara_action, aqara_message_received)
 
 
 class TheaterLight(LightEntity):
@@ -543,3 +554,8 @@ class TheaterLight(LightEntity):
             )
         else:
             await self.async_turn_off()
+
+    async def aqara_message_received(self, topic: str, payload: str, qos: int) -> None:
+        """A new MQTT aqara message has been received."""
+
+        _LOGGER.error(f"{self._name} aqara action: Topic: {topic}, Payload: {payload}")
