@@ -562,14 +562,14 @@ class TheaterLight(LightEntity):
     async def aqara_message_received(self, topic: str, payload: str, qos: int) -> None:
         """A new MQTT aqara message has been received."""
 
-        _LOGGER.error(f"{self._name} aqara action: Topic: {topic}, Payload: {payload}")
+        # _LOGGER.error(f"{self._name} aqara action: Topic: {topic}, Payload: {payload}")
         if payload == "flip90":
             state = self.hass.states.get(self._dartboard).state
-            _LOGGER.error(f"{self._name} aqara action: state: {state}")
-            # _LOGGER.error(f"{self._name} aqara action: state.state: {state.state}")
+            # _LOGGER.error(f"{self._name} aqara action: state: {state}")
+
             if state == "on":
-                await self._rightlight_db.turn_off()
-                await self._rightlight_ar.turn_off()
+                await self._rightlight_db.disable_and_turn_off()
+                await self._rightlight_ar.disable_and_turn_off()
             else:
                 await self._rightlight_db.turn_on(mode="Vivid")
                 await self._rightlight_ar.turn_on(mode="Vivid")
