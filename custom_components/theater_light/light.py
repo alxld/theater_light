@@ -89,7 +89,7 @@ async def async_setup_platform(
         await ent.switch_message_received(topic, payload, qos)
 
     @callback
-    async def aqara_message_received(topic: str, payload: str, qor: int) -> None:
+    async def aqara_message_received(topic: str, payload: str, qos: int) -> None:
         """A new MQTT aqara message has been received."""
         await ent.aqara_message_received(topic, payload, qos)
 
@@ -118,6 +118,8 @@ class TheaterLight(LightEntity):
     def __init__(self) -> None:
         """Initialize Theater Light."""
         self._light = light_entity
+        self._dartboard = dartboard_entity
+        self._arcade = arcade_entity
         self._name = "Theater"
         # self._state = 'off'
         self._brightness = 0
@@ -154,6 +156,8 @@ class TheaterLight(LightEntity):
     async def async_added_to_hass(self) -> None:
         """Instantiate RightLight"""
         self._rightlight = RightLight(self._light, self.hass)
+        self._rightlight_db = RightLight(self._dartboard, self.hass)
+        self._rightlight_ar = RightLight(self._arcade, self.hass)
 
         #        #temp = self.hass.states.get(harmony_entity).new_state
         #        #_LOGGER.error(f"Harmony state: {temp}")
@@ -559,3 +563,16 @@ class TheaterLight(LightEntity):
         """A new MQTT aqara message has been received."""
 
         _LOGGER.error(f"{self._name} aqara action: Topic: {topic}, Payload: {payload}")
+        if payload == "flip90":
+            state = self.hass.states.get(self._dartboard)
+            _LOGGER.error(f"{self._name} aqara action: state: {state}
+            await self._rightlight_db.turn_on(mode="Vivid")
+            await self._rightlight_ar.turn_on(mode="Vivid")
+        elif payload == "flip180":
+            pass
+        elif payload == "rotate_right":
+            pass
+        elif payload == "rotate_left":
+            pass
+        elif payload == "tap":
+            pass
