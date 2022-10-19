@@ -564,10 +564,10 @@ class TheaterLight(LightEntity):
 
         _LOGGER.error(f"{self._name} aqara action: Topic: {topic}, Payload: {payload}")
         if payload == "flip90":
-            state = self.hass.states.get(self._dartboard)
+            state = self.hass.states.get(self._dartboard).state
             _LOGGER.error(f"{self._name} aqara action: state: {state}")
-            _LOGGER.error(f"{self._name} aqara action: state.state: {state.state}")
-            if state.state == "on":
+            # _LOGGER.error(f"{self._name} aqara action: state.state: {state.state}")
+            if state == "on":
                 await self._rightlight_db.turn_off()
                 await self._rightlight_ar.turn_off()
             else:
