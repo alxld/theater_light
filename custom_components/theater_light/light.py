@@ -16,6 +16,7 @@ from homeassistant.components.light import (
     ATTR_EFFECT_LIST,
     ATTR_FLASH,
     ATTR_HS_COLOR,
+    ATTR_RGB_COLOR,
     ATTR_MAX_MIREDS,
     ATTR_MIN_MIREDS,
     ATTR_TRANSITION,
@@ -136,7 +137,7 @@ class TheaterLight(LightEntity):
         self._available = True
         self._occupancy = False
         self.entity_id = generate_entity_id(ENTITY_ID_FORMAT, self._name, [])
-        self._white_value: Optional[int] = None
+        # self._white_value: Optional[int] = None
         self._effect_list: Optional[List[str]] = None
         self._effect: Optional[str] = None
         self._supported_features: int = 0
@@ -266,8 +267,8 @@ class TheaterLight(LightEntity):
 
     @property
     def should_poll(self):
-        """Will update state as needed"""
-        return False
+        """Allow for color updates to be polled"""
+        return True
 
     @property
     def name(self) -> str:
@@ -326,10 +327,10 @@ class TheaterLight(LightEntity):
         """Return the warmest color_temp that this light group supports."""
         return self._max_mireds
 
-    @property
-    def white_value(self) -> Optional[int]:
-        """Return the white value of this light group between 0..255."""
-        return self._white_value
+    # @property
+    # def white_value(self) -> Optional[int]:
+    #    """Return the white value of this light group between 0..255."""
+    #    return self._white_value
 
     @property
     def rgb_color(self) -> tuple[int, int, int] | None:
@@ -390,6 +391,9 @@ class TheaterLight(LightEntity):
         if ATTR_HS_COLOR in kwargs:
             rl = False
             data[ATTR_HS_COLOR] = kwargs[ATTR_HS_COLOR]
+        if ATTR_RGB_COLOR in kwargs:
+            rl = False
+            data[ATTR_RGB_COLOR] = kwargs[ATTR_RGB_COLOR]
         if ATTR_BRIGHTNESS in kwargs:
             data[ATTR_BRIGHTNESS] = kwargs[ATTR_BRIGHTNESS]
         if ATTR_COLOR_TEMP in kwargs:
@@ -482,35 +486,12 @@ class TheaterLight(LightEntity):
         if state == None:
             return
 
-        #        self._is_on = (state.state == STATE_ON)
-        #        self._available = (state.state != STATE_UNAVAILABLE)
-
-        #        self._brightness = state.attributes.get(ATTR_BRIGHTNESS)
-
-        #        self._hs_color = state.attributes.get(ATTR_HS_COLOR)
-
-        #        self._white_value = state.attributes.get(ATTR_WHITE_VALUE)
-
-        #        self._color_temp = state.attributes.get(ATTR_COLOR_TEMP, self._color_temp)
-        #        self._min_mireds = state.attributes.get(ATTR_MIN_MIREDS, 154)
-        #        self._max_mireds = state.attributes.get(ATTR_MAX_MIREDS, 500)
-
+        self._hs_color = state.attributes.get(ATTR_HS_COLOR, self._hs_color)
+        self._rgb_color = state.attributes.get(ATTR_RGB_COLOR, self._rgb_color)
+        self._color_temp = state.attributes.get(ATTR_COLOR_TEMP, self._color_temp)
+        self._min_mireds = state.attributes.get(ATTR_MIN_MIREDS, 154)
+        self._max_mireds = state.attributes.get(ATTR_MAX_MIREDS, 500)
         self._effect_list = state.attributes.get(ATTR_EFFECT_LIST)
-
-    #        self._effect = state.attributes.get(ATTR_EFFECT)
-
-    #        self._supported_features = state.attributes.get(ATTR_SUPPORTED_FEATURES)
-    # Bitwise-or the supported features with the color temp feature
-    #        self._supported_features |= SUPPORT_COLOR_TEMP
-
-    #    def update(self) -> None:
-    #        """Fetch new state data for this light.
-    #        This is the only method that should fetch new data for Home Assistant.
-    #        """
-    #        # self._light.update()
-    #        # self._state = self._light.is_on()
-    #        # self._brightness = self._light.brightness
-    #        self._updateState()
 
     async def switch_message_received(self, topic: str, payload: str, qos: int) -> None:
         """A new MQTT message has been received."""
