@@ -64,20 +64,20 @@ class TheaterLight(NewLight):
         self.other_light_trackers["light.harmony_button_3"] = 50
         self.other_light_trackers["light.harmony_button_4"] = 0
 
-    async def async_added_to_hass(self) -> None:
-        # Track harmony button template lights
-        event.async_track_state_change_event(
-            self.hass, harmony_button_1, self.harmony_button_1_update
-        )
-        event.async_track_state_change_event(
-            self.hass, harmony_button_2, self.harmony_button_2_update
-        )
-        event.async_track_state_change_event(
-            self.hass, harmony_button_3, self.harmony_button_3_update
-        )
-        event.async_track_state_change_event(
-            self.hass, harmony_button_4, self.harmony_button_4_update
-        )
+    # async def async_added_to_hass(self) -> None:
+    #    # Track harmony button template lights
+    #    event.async_track_state_change_event(
+    #        self.hass, harmony_button_1, self.harmony_button_1_update
+    #    )
+    #    event.async_track_state_change_event(
+    #        self.hass, harmony_button_2, self.harmony_button_2_update
+    #    )
+    #    event.async_track_state_change_event(
+    #        self.hass, harmony_button_3, self.harmony_button_3_update
+    #    )
+    #    event.async_track_state_change_event(
+    #        self.hass, harmony_button_4, self.harmony_button_4_update
+    #    )
 
 
 #    @callback
