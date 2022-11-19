@@ -51,11 +51,10 @@ class TheaterLight(NewLight):
         """Initialize Theater Light."""
         self._dartboard = dartboard_entity
         self._arcade = arcade_entity
-        self.entities["light.theater_gorup"] = None
+        self.entities["light.theater_group"] = None
         self.switch = "Theater Switch"
-        self.has_json = True
         self.motion_sensors.append("Theater Motion Sensor")
-        self._name = "Theater"
+        self.name = "Theater"
         # self.has_harmony = True
         self.harmony_entity = "remote.theater_harmony_hub"
 
