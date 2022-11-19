@@ -64,6 +64,8 @@ class TheaterLight(NewLight):
         self.other_light_trackers["light.harmony_button_3"] = 50
         self.other_light_trackers["light.harmony_button_4"] = 0
 
+        super(TheaterLight, self).__init__(self._name, debug=False, debug_rl=False)
+
     # async def async_added_to_hass(self) -> None:
     #    # Track harmony button template lights
     #    event.async_track_state_change_event(
