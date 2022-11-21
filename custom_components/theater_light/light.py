@@ -44,7 +44,9 @@ class TheaterLight(NewLight):
 
     def __init__(self) -> None:
         """Initialize Theater Light."""
-        super(TheaterLight, self).__init__("Theater", debug=False, debug_rl=False)
+        super(TheaterLight, self).__init__(
+            "Theater", domain=DOMAIN, debug=False, debug_rl=False
+        )
 
         self._dartboard = dartboard_entity
         self._arcade = arcade_entity
