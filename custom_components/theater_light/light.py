@@ -53,7 +53,7 @@ class TheaterLight(NewLight):
         self.entities["light.theater_group"] = None
         self.switch = "Theater Switch"
         self.motion_sensors.append("Theater Motion Sensor")
-        self.harmony_entity = "remote.theater_harmony_hub"
+        self.motion_disable_entities.append("remote.theater_harmony_hub")
         self.turn_off_other_lights = True
 
         self.other_light_trackers["light.harmony_button_1"] = 175
