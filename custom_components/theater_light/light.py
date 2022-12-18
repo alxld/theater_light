@@ -10,20 +10,6 @@ from . import DOMAIN
 sys.path.append("custom_components/new_light")
 from new_light import NewLight
 
-# light_entity = "light.theater_group"
-dartboard_entity = "light.dart_board"
-arcade_entity = "light.arcade"
-outside_near_group = "light.outside_near_group"
-# switch_action = "zigbee2mqtt/Theater Switch/action"
-# motion_sensor_action = "zigbee2mqtt/Theater Motion Sensor"
-aqara_action = "zigbee2mqtt/AqaraTest/action"
-# brightness_step = 43
-# motion_sensor_brightness = 192
-# has_harmony = True
-# has_motion_sensor = True
-# has_switch = True
-has_aqara = True
-
 
 async def async_setup_platform(
     hass: HomeAssistant,
@@ -48,8 +34,8 @@ class TheaterLight(NewLight):
             "Theater", domain=DOMAIN, debug=False, debug_rl=False
         )
 
-        self._dartboard = dartboard_entity
-        self._arcade = arcade_entity
+        self._dartboard = "light.dart_board"
+        self._arcade = "light.arcade"
         self.entities["light.theater_group"] = None
         self.switch = "Theater Switch"
         self.motion_sensors.append("Theater Motion Sensor")
