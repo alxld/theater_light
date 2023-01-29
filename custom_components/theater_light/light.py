@@ -34,8 +34,8 @@ class TheaterLight(NewLight):
             "Theater", domain=DOMAIN, debug=False, debug_rl=False
         )
 
-        self._dartboard = "light.dart_board"
-        self._arcade = "light.arcade"
+        self._dartboard = "light.theater_dart_board"
+        self._arcade = "light.theater_arcade"
         self.entities["light.theater_group"] = None
         self.switch = "Theater Switch"
         self.motion_sensors.append("Theater Motion Sensor")
