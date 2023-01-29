@@ -1,5 +1,5 @@
 {
-    "on-hold": [
+    "on_hold": [
         [ [ "RightLight", "light.theater_group", "Vivid" ] ],
         [ [ "RightLight", "light.theater_group", "Bright"] ]
     ]
