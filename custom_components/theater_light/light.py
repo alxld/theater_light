@@ -37,8 +37,10 @@ class TheaterLight(NewLight):
         self._dartboard = "light.theater_dart_board"
         self._arcade = "light.theater_arcade"
         self.entities["light.theater_group"] = None
-        self.switch = "Theater Switch"
-        self.motion_sensors.append("Theater Motion Sensor")
+        # self.switch = "Theater Switch"
+        self.switch = "00:17:88:01:02:d4:3a:83"
+        # self.motion_sensors.append("Theater Motion Sensor")
+        self.motion_sensors.append("binary_sensor.theater_motion_sensor_occupancy_5")
         self.motion_disable_entities.append("remote.theater_harmony_hub")
         self.turn_off_other_lights = True
 
